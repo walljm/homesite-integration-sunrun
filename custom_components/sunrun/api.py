@@ -81,21 +81,20 @@ class SunrunApi:
         }
 
         try:
-            _LOGGER.debug("Requesting OTP for phone: %s", phone)
-            _LOGGER.debug("Request URL: %s", url)
-            _LOGGER.debug("Request payload: %s", payload)
+            _LOGGER.warning("Requesting OTP for phone: %s", phone)
+            _LOGGER.warning("Request URL: %s", url)
             async with self._session.post(
                 url, json=payload, headers=self._get_headers()
             ) as response:
                 response_text = await response.text()
-                _LOGGER.debug("OTP request response status: %s", response.status)
-                _LOGGER.debug("OTP request response: %s", response_text)
+                _LOGGER.warning("OTP request response status: %s", response.status)
+                _LOGGER.warning("OTP request response: %s", response_text)
                 if response.status == 200:
                     import json
                     data = json.loads(response_text)
-                    _LOGGER.debug("Parsed response keys: %s", list(data.keys()))
+                    _LOGGER.warning("Parsed response keys: %s", list(data.keys()))
                     if "data" in data:
-                        _LOGGER.debug("data keys: %s", list(data["data"].keys()) if isinstance(data.get("data"), dict) else type(data.get("data")))
+                        _LOGGER.warning("data keys: %s", list(data["data"].keys()) if isinstance(data.get("data"), dict) else type(data.get("data")))
                     
                     # Try multiple possible token locations
                     self._auth_token = (
@@ -113,7 +112,6 @@ class SunrunApi:
                 else:
                     _LOGGER.error(
                         "Failed to request OTP: %s - %s", response.status, response_text
-                    )
                     raise SunrunAuthError(f"Failed to request OTP: {response.status}")
         except aiohttp.ClientError as err:
             _LOGGER.error("Network error requesting OTP: %s", err)
