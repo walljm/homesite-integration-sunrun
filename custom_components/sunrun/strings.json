@@ -1,0 +1,68 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Sunrun Account",
+        "description": "Enter your phone number associated with your Sunrun account. An SMS verification code will be sent to this number.\n\nFormat: {phone_format}",
+        "data": {
+          "phone": "Phone Number"
+        }
+      },
+      "otp": {
+        "title": "Verify Phone",
+        "description": "Enter the 6-digit verification code sent to {phone}",
+        "data": {
+          "code": "Verification Code"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate",
+        "description": "Your Sunrun session has expired. Click submit to receive a new verification code at {phone}."
+      },
+      "reauth_otp": {
+        "title": "Verify Phone",
+        "description": "Enter the 6-digit verification code sent to {phone}",
+        "data": {
+          "code": "Verification Code"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Sunrun. Please try again.",
+      "invalid_auth": "Invalid verification code. Please try again.",
+      "invalid_phone": "Invalid phone number format. Please use (XXX) XXX-XXXX or +1XXXXXXXXXX.",
+      "invalid_code": "Please enter a valid 6-digit code.",
+      "unknown": "An unexpected error occurred. Please try again."
+    },
+    "abort": {
+      "already_configured": "This Sunrun account is already configured.",
+      "reauth_successful": "Reauthentication successful.",
+      "reauth_failed": "Reauthentication failed."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "daily_production": {
+        "name": "Daily Production"
+      },
+      "cumulative_production": {
+        "name": "Cumulative Production"
+      },
+      "current_power": {
+        "name": "Current Power"
+      },
+      "consumption": {
+        "name": "Consumption"
+      },
+      "grid_export": {
+        "name": "Grid Export"
+      },
+      "grid_import": {
+        "name": "Grid Import"
+      },
+      "battery_solar": {
+        "name": "Battery Solar"
+      }
+    }
+  }
+}
