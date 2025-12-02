@@ -33,7 +33,7 @@ A custom Home Assistant integration to monitor your Sunrun solar system using da
 
 1. Make sure [HACS](https://hacs.xyz/) is installed in your Home Assistant instance
 2. Go to **HACS** → **Integrations** → **⋮** (menu) → **Custom repositories**
-3. Add this repository URL: `https://github.com/walljm/sunrun`
+3. Add this repository URL: `https://github.com/walljm/homesite-integration-sunrun`
 4. Select **Integration** as the category
 5. Click **Add**
 6. Search for "Sunrun" and install it
@@ -41,7 +41,7 @@ A custom Home Assistant integration to monitor your Sunrun solar system using da
 
 ### Manual Installation
 
-1. Download the latest release from the [releases page](https://github.com/walljm/sunrun/releases)
+1. Download the latest release from the [releases page](https://github.com/walljm/homesite-integration-sunrun/releases)
 2. Extract the `sunrun` folder from the zip file
 3. Copy the `sunrun` folder to your `config/custom_components/` directory
 4. Restart Home Assistant
