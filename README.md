@@ -6,26 +6,64 @@ A custom Home Assistant integration to monitor your Sunrun solar system using da
 
 ## Features
 
-- **Solar Production Monitoring**: Track your daily and cumulative solar energy production
+- **Solar Production Monitoring**: Track your daily, monthly, and lifetime solar energy production
 - **Real-time Power**: View current power generation (updated hourly)
 - **Energy Flow** (if available on your system):
   - Grid export/import
   - Home consumption
   - Battery solar contribution
+- **System Information**: View system specifications including size, panel count, and orientation
+- **Sun Exposure**: Monthly sun exposure percentages for your location
 
 ## Sensors
+
+### Production Sensors
 
 | Sensor | Description | Unit |
 |--------|-------------|------|
 | Daily Production | Energy produced today | kWh |
-| Cumulative Production | Total energy produced since installation | kWh |
+| Monthly Production (30 Days) | Energy produced in the last 30 days | kWh |
+| Lifetime Production | Total energy produced since installation | kWh |
+
+### Power Sensors
+
+| Sensor | Description | Unit |
+|--------|-------------|------|
 | Current Power | Current power being generated | W |
 | Consumption | Current home power consumption | W |
 | Grid Export | Power being exported to the grid | W |
 | Grid Import | Power being imported from the grid | W |
 | Battery Solar | Power from battery | W |
 
-> **Note**: Not all sensors may be available depending on your Sunrun system configuration. Systems without consumption monitoring or batteries will show those sensors as unavailable.
+### System Information Sensors
+
+| Sensor | Description | Unit |
+|--------|-------------|------|
+| System Size | Total capacity of your solar system | kW |
+| Number of Panels | Total number of solar panels installed | - |
+| System Azimuth | Compass direction the panels face | ° |
+| System Pitch | Tilt angle of the panels | ° |
+
+### Sun Exposure Sensors
+
+Monthly sun exposure percentages for your system's location (January through December):
+
+| Sensor | Description | Unit |
+|--------|-------------|------|
+| Sun Exposure January | Expected sun exposure for January | % |
+| Sun Exposure February | Expected sun exposure for February | % |
+| Sun Exposure March | Expected sun exposure for March | % |
+| Sun Exposure April | Expected sun exposure for April | % |
+| Sun Exposure May | Expected sun exposure for May | % |
+| Sun Exposure June | Expected sun exposure for June | % |
+| Sun Exposure July | Expected sun exposure for July | % |
+| Sun Exposure August | Expected sun exposure for August | % |
+| Sun Exposure September | Expected sun exposure for September | % |
+| Sun Exposure October | Expected sun exposure for October | % |
+| Sun Exposure November | Expected sun exposure for November | % |
+| Sun Exposure December | Expected sun exposure for December | % |
+
+> **Note**: Not all sensors may be available depending on your Sunrun system configuration. Systems without consumption monitoring or batteries will show those sensors as unavailable. System information and sun exposure sensors depend on data availability from the Sunrun API.
 
 ## Installation
 
