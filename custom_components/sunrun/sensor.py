@@ -58,6 +58,11 @@ class SunrunSensor(CoordinatorEntity[SunrunDataUpdateCoordinator], SensorEntity)
         self._attr_name = sensor_info["name"]
         self._attr_icon = sensor_info["icon"]
         
+        # Set unit of measurement
+        unit = sensor_info.get("unit")
+        if unit:
+            self._attr_native_unit_of_measurement = unit
+        
         # Set device class
         device_class = sensor_info.get("device_class")
         if device_class == "energy":
@@ -74,7 +79,7 @@ class SunrunSensor(CoordinatorEntity[SunrunDataUpdateCoordinator], SensorEntity)
         elif state_class == "measurement":
             self._attr_state_class = SensorStateClass.MEASUREMENT
         
-        # Device info
+        # Device info - will be enhanced with system data
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.data["prospect_id"])},
             name="Sunrun Solar System",
@@ -109,6 +114,20 @@ class SunrunSensor(CoordinatorEntity[SunrunDataUpdateCoordinator], SensorEntity)
             last_update = self.coordinator.data.get("last_update")
             if last_update:
                 attrs["last_api_update"] = last_update
+            
+            # Add system info as attributes for main sensors
+            if self._sensor_type in ("daily_production", "cumulative_production", "current_power"):
+                pto_date = self.coordinator.data.get("pto_date")
+                if pto_date:
+                    attrs["pto_date"] = pto_date
+                
+                has_battery = self.coordinator.data.get("has_battery")
+                if has_battery is not None:
+                    attrs["has_battery"] = has_battery
+                
+                has_consumption = self.coordinator.data.get("has_consumption")
+                if has_consumption is not None:
+                    attrs["has_consumption_monitoring"] = has_consumption
         
         return attrs
 
@@ -125,9 +144,12 @@ class SunrunSensor(CoordinatorEntity[SunrunDataUpdateCoordinator], SensorEntity)
         # Some sensors might not be available for all systems
         value = self.coordinator.data.get(self._sensor_type)
         
-        # For power sensors, None means not available
-        # For energy sensors, we want to show 0 if no data
+        # For power sensors and optional features, None means not available
         if self._sensor_type in ("consumption", "grid_export", "grid_import", "battery_solar"):
+            return value is not None
+        
+        # System info sensors should always be available if we have data
+        if self._sensor_type in ("system_size", "num_panels", "system_azimuth", "system_pitch") or self._sensor_type.startswith("sun_exposure_"):
             return value is not None
         
         return True

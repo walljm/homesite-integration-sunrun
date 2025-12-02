@@ -62,6 +62,54 @@
       },
       "battery_solar": {
         "name": "Battery Solar"
+      },
+      "system_size": {
+        "name": "System Size"
+      },
+      "num_panels": {
+        "name": "Number of Panels"
+      },
+      "system_azimuth": {
+        "name": "System Azimuth"
+      },
+      "system_pitch": {
+        "name": "System Pitch"
+      },
+      "sun_exposure_jan": {
+        "name": "Sun Exposure January"
+      },
+      "sun_exposure_feb": {
+        "name": "Sun Exposure February"
+      },
+      "sun_exposure_mar": {
+        "name": "Sun Exposure March"
+      },
+      "sun_exposure_apr": {
+        "name": "Sun Exposure April"
+      },
+      "sun_exposure_may": {
+        "name": "Sun Exposure May"
+      },
+      "sun_exposure_jun": {
+        "name": "Sun Exposure June"
+      },
+      "sun_exposure_jul": {
+        "name": "Sun Exposure July"
+      },
+      "sun_exposure_aug": {
+        "name": "Sun Exposure August"
+      },
+      "sun_exposure_sep": {
+        "name": "Sun Exposure September"
+      },
+      "sun_exposure_oct": {
+        "name": "Sun Exposure October"
+      },
+      "sun_exposure_nov": {
+        "name": "Sun Exposure November"
+      },
+      "sun_exposure_dec": {
+        "name": "Sun Exposure December"
       }
     }
   }

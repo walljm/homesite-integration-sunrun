@@ -12,6 +12,7 @@ from .const import (
     AUTH_REQUEST_ENDPOINT,
     AUTH_RESPOND_ENDPOINT,
     CUMULATIVE_PRODUCTION_ENDPOINT,
+    PRODUCT_OFFERINGS_ENDPOINT,
     SITE_PRODUCTION_MINUTE_ENDPOINT,
 )
 
@@ -291,6 +292,41 @@ class SunrunApi:
             _LOGGER.error("Network error getting site production: %s", err)
             raise SunrunApiError(f"Network error: {err}") from err
 
+    async def get_product_offerings(self) -> dict[str, Any]:
+        """Get product offerings / system information.
+
+        Returns:
+            Dict with system info like size, panels, location, etc.
+        """
+        if not self._access_token or not self._prospect_id:
+            raise SunrunAuthError("Not authenticated")
+
+        url = f"{API_BASE_URL}{PRODUCT_OFFERINGS_ENDPOINT}/{self._prospect_id}"
+
+        try:
+            async with self._session.get(
+                url, headers=self._get_headers()
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    _LOGGER.debug("Got product offerings data")
+                    return data
+                elif response.status == 401:
+                    raise SunrunAuthError("Authentication expired")
+                else:
+                    error_text = await response.text()
+                    _LOGGER.error(
+                        "Failed to get product offerings: %s - %s",
+                        response.status,
+                        error_text,
+                    )
+                    raise SunrunApiError(
+                        f"Failed to get product offerings: {response.status}"
+                    )
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Network error getting product offerings: %s", err)
+            raise SunrunApiError(f"Network error: {err}") from err
+
     async def get_latest_data(self) -> dict[str, Any]:
         """Get the latest production data.
 
@@ -306,6 +342,27 @@ class SunrunApi:
             "grid_import": None,
             "battery_solar": None,
             "last_update": None,
+            "system_size": None,
+            "num_panels": None,
+            "system_azimuth": None,
+            "system_pitch": None,
+            "has_battery": None,
+            "has_consumption": None,
+            "pto_date": None,
+            "latitude": None,
+            "longitude": None,
+            "sun_exposure_jan": None,
+            "sun_exposure_feb": None,
+            "sun_exposure_mar": None,
+            "sun_exposure_apr": None,
+            "sun_exposure_may": None,
+            "sun_exposure_jun": None,
+            "sun_exposure_jul": None,
+            "sun_exposure_aug": None,
+            "sun_exposure_sep": None,
+            "sun_exposure_oct": None,
+            "sun_exposure_nov": None,
+            "sun_exposure_dec": None,
         }
 
         # Get minute-level data for current power
@@ -367,6 +424,47 @@ class SunrunApi:
                 
         except SunrunApiError as err:
             _LOGGER.warning("Could not get cumulative data: %s", err)
+
+        # Get product offerings / system info
+        try:
+            offerings = await self.get_product_offerings()
+            if offerings:
+                result["system_size"] = offerings.get("system_size")
+                num_panels = offerings.get("numPanels")
+                if num_panels:
+                    result["num_panels"] = int(float(num_panels))
+                azimuth = offerings.get("system_azimuth")
+                if azimuth:
+                    result["system_azimuth"] = round(float(azimuth), 1)
+                pitch = offerings.get("system_pitch")
+                if pitch:
+                    result["system_pitch"] = round(float(pitch), 1)
+                result["has_battery"] = offerings.get("brightBox", False)
+                result["has_consumption"] = offerings.get("hasConsumption", False)
+                result["pto_date"] = offerings.get("ptoDate")
+                result["latitude"] = offerings.get("lat")
+                result["longitude"] = offerings.get("lon")
+                # Monthly sun exposure (weighted average shade percentages)
+                month_map = {
+                    "jan": "weighted_avg_jan_shade",
+                    "feb": "weighted_avg_feb_shade",
+                    "mar": "weighted_avg_mar_shade",
+                    "apr": "weighted_avg_apr_shade",
+                    "may": "weighted_avg_may_shade",
+                    "jun": "weighted_avg_jun_shade",
+                    "jul": "weighted_avg_juy_shade",  # Note: API has typo "juy"
+                    "aug": "weighted_avg_aug_shade",
+                    "sep": "weighted_avg_sep_shade",
+                    "oct": "weighted_avg_oct_shade",
+                    "nov": "weighted_avg_nov_shade",
+                    "dec": "weighted_avg_dec_shade",
+                }
+                for month, api_key in month_map.items():
+                    value = offerings.get(api_key)
+                    if value is not None:
+                        result[f"sun_exposure_{month}"] = round(float(value), 1)
+        except SunrunApiError as err:
+            _LOGGER.warning("Could not get product offerings: %s", err)
 
         _LOGGER.debug("Final result: %s", result)
         return result
