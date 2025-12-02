@@ -81,33 +81,23 @@ class SunrunApi:
         }
 
         try:
-            _LOGGER.warning("Requesting OTP for phone: %s", phone)
-            _LOGGER.warning("Request URL: %s", url)
+            _LOGGER.debug("Requesting OTP for phone: %s", phone)
             async with self._session.post(
                 url, json=payload, headers=self._get_headers()
             ) as response:
                 response_text = await response.text()
-                _LOGGER.warning("OTP request response status: %s", response.status)
-                _LOGGER.warning("OTP request response: %s", response_text)
+                _LOGGER.debug("OTP request response status: %s", response.status)
                 if response.status == 200:
                     import json
                     data = json.loads(response_text)
-                    _LOGGER.warning("Parsed response keys: %s", list(data.keys()))
-                    if "data" in data:
-                        _LOGGER.warning("data keys: %s", list(data["data"].keys()) if isinstance(data.get("data"), dict) else type(data.get("data")))
                     
-                    # Try multiple possible token locations
-                    self._auth_token = (
-                        data.get("data", {}).get("token") or
-                        data.get("token") or
-                        data.get("data", {}).get("authToken") or
-                        data.get("authToken")
-                    )
+                    # Token is at root level in response: {"token": "...", "session": "..."}
+                    self._auth_token = data.get("token")
                     
                     if self._auth_token:
                         _LOGGER.debug("OTP requested successfully, token received")
                         return True
-                    _LOGGER.error("No token received in OTP request response. Full response: %s", response_text)
+                    _LOGGER.error("No token received in OTP request response")
                     return False
                 else:
                     _LOGGER.error(
@@ -142,21 +132,14 @@ class SunrunApi:
         headers["Authorization"] = self._auth_token
 
         try:
-            _LOGGER.debug("Verifying OTP for phone: %s with code: %s", phone, code)
-            _LOGGER.debug("Verify URL: %s", url)
-            _LOGGER.debug("Verify payload: %s", {**payload, "token": "[REDACTED]"})
-            _LOGGER.debug("Auth token present: %s", bool(self._auth_token))
+            _LOGGER.debug("Verifying OTP for phone: %s", phone)
             async with self._session.post(
                 url, json=payload, headers=headers
             ) as response:
-                response_text = await response.text()
-                _LOGGER.debug("OTP verify response status: %s", response.status)
-                _LOGGER.debug("OTP verify response: %s", response_text[:500] if len(response_text) > 500 else response_text)
                 if response.status == 200:
-                    import json
-                    data = json.loads(response_text)
+                    data = await response.json()
                     
-                    # Extract access token
+                    # Extract access token from data.accessToken
                     self._access_token = data.get("data", {}).get("accessToken")
                     
                     # Extract prospect ID and PTO date from opportunities
@@ -169,11 +152,13 @@ class SunrunApi:
                         pto_date = None
 
                     if not self._access_token or not self._prospect_id:
+                        _LOGGER.error("Missing access token or prospect ID. Token: %s, ProspectID: %s", 
+                                     bool(self._access_token), self._prospect_id)
                         raise SunrunAuthError(
                             "Missing access token or prospect ID in response"
                         )
 
-                    _LOGGER.debug("OTP verified successfully")
+                    _LOGGER.debug("OTP verified successfully for prospect %s", self._prospect_id)
                     return {
                         "access_token": self._access_token,
                         "prospect_id": self._prospect_id,
