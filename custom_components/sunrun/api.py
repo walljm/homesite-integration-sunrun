@@ -112,6 +112,7 @@ class SunrunApi:
                 else:
                     _LOGGER.error(
                         "Failed to request OTP: %s - %s", response.status, response_text
+                    )
                     raise SunrunAuthError(f"Failed to request OTP: {response.status}")
         except aiohttp.ClientError as err:
             _LOGGER.error("Network error requesting OTP: %s", err)
