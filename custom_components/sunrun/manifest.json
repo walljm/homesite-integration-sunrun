@@ -4,9 +4,9 @@
   "codeowners": ["@walljm"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/walljm/sunrun",
+  "documentation": "https://github.com/walljm/homesite-integration-sunrun",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/walljm/sunrun/issues",
+  "issue_tracker": "https://github.com/walljm/homesite-integration-sunrun/issues",
   "requirements": [],
   "version": "1.0.0"
 }
