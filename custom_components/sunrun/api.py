@@ -311,9 +311,10 @@ class SunrunApi:
         # Get minute-level data for current power
         try:
             minute_data = await self.get_site_production_minute()
-            if minute_data:
+            if minute_data and isinstance(minute_data, list) and len(minute_data) > 0:
                 # Get the most recent data point
-                latest = minute_data[-1] if isinstance(minute_data, list) else minute_data
+                latest = minute_data[-1]
+                _LOGGER.debug("Latest minute data point: %s", latest)
                 
                 # Convert kW to W if necessary (API returns kW)
                 solar = latest.get("solar") or latest.get("pvSolar") or 0
@@ -342,27 +343,32 @@ class SunrunApi:
         # Get cumulative production data
         try:
             cumulative_data = await self.get_cumulative_production()
-            if cumulative_data:
-                # Find today's data and the most recent cumulative value
+            if cumulative_data and isinstance(cumulative_data, list) and len(cumulative_data) > 0:
                 today = datetime.now().strftime("%Y-%m-%d")
+                _LOGGER.debug("Looking for data for date: %s", today)
                 
-                if isinstance(cumulative_data, dict):
-                    # Data is keyed by date
-                    if today in cumulative_data:
-                        today_data = cumulative_data[today]
-                        result["daily_production"] = today_data.get("deliveredKwh", 0)
-                        result["cumulative_production"] = today_data.get("cumulativeKwh", 0)
-                    else:
-                        # Get the most recent date's data
-                        dates = sorted(cumulative_data.keys(), reverse=True)
-                        if dates:
-                            latest_data = cumulative_data[dates[0]]
-                            result["cumulative_production"] = latest_data.get("cumulativeKwh", 0)
-                            # If it's yesterday, still show the daily production
-                            result["daily_production"] = latest_data.get("deliveredKwh", 0)
+                # API returns list like: [{"timestamp": "2025-12-01", "deliveredKwh": 3, "cumulativeKwh": 22.5}, ...]
+                # Find today's data first, or use the most recent
+                today_record = None
+                latest_record = cumulative_data[-1]  # Last item is most recent
+                
+                for record in cumulative_data:
+                    record_date = record.get("timestamp", "")[:10]
+                    if record_date == today:
+                        today_record = record
+                        break
+                
+                # Use today's record if found, otherwise use latest
+                use_record = today_record if today_record else latest_record
+                _LOGGER.debug("Using cumulative record: %s", use_record)
+                
+                result["daily_production"] = use_record.get("deliveredKwh")
+                result["cumulative_production"] = use_record.get("cumulativeKwh")
+                
         except SunrunApiError as err:
             _LOGGER.warning("Could not get cumulative data: %s", err)
 
+        _LOGGER.debug("Final result: %s", result)
         return result
 
     async def test_connection(self) -> bool:
