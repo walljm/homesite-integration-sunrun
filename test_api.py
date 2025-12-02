@@ -161,7 +161,8 @@ class SunrunApi:
         result: dict[str, Any] = {
             "current_power": None,
             "daily_production": None,
-            "cumulative_production": None,
+            "monthly_production": None,
+            "lifetime_production": None,
             "consumption": None,
             "grid_export": None,
             "grid_import": None,
@@ -240,10 +241,22 @@ class SunrunApi:
                 print(f"  [DEBUG] Using cumulative record: {use_record}")
                 
                 result["daily_production"] = use_record.get("deliveredKwh")
-                result["cumulative_production"] = use_record.get("cumulativeKwh")
+                result["monthly_production"] = use_record.get("cumulativeKwh")
                 
         except SunrunApiError as err:
             print(f"  [WARN] Could not get cumulative data: {err}")
+
+        # Get lifetime production (from PTO date)
+        try:
+            # We'll get PTO date from offerings below, for now try with a far back date
+            pto_date = datetime(2015, 1, 1)  # Will be updated after we get offerings
+            lifetime_data = await self.get_cumulative_production(start_date=pto_date)
+            if lifetime_data and isinstance(lifetime_data, list) and len(lifetime_data) > 0:
+                latest_record = lifetime_data[-1]
+                result["lifetime_production"] = latest_record.get("cumulativeKwh")
+                print(f"  [DEBUG] Lifetime production: {result['lifetime_production']} kWh")
+        except SunrunApiError as err:
+            print(f"  [WARN] Could not get lifetime data: {err}")
 
         # Get product offerings / system info
         try:

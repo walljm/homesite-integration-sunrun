@@ -336,7 +336,8 @@ class SunrunApi:
         result: dict[str, Any] = {
             "current_power": None,
             "daily_production": None,
-            "cumulative_production": None,
+            "monthly_production": None,
+            "lifetime_production": None,
             "consumption": None,
             "grid_export": None,
             "grid_import": None,
@@ -420,10 +421,34 @@ class SunrunApi:
                 _LOGGER.debug("Using cumulative record: %s", use_record)
                 
                 result["daily_production"] = use_record.get("deliveredKwh")
-                result["cumulative_production"] = use_record.get("cumulativeKwh")
+                result["monthly_production"] = use_record.get("cumulativeKwh")
                 
         except SunrunApiError as err:
             _LOGGER.warning("Could not get cumulative data: %s", err)
+
+        # Get lifetime production (from PTO date to now)
+        try:
+            # First get PTO date from offerings if we don't have it yet
+            pto_date_str = result.get("pto_date")
+            if not pto_date_str:
+                # Try to get it from product offerings first
+                offerings = await self.get_product_offerings()
+                if offerings:
+                    pto_date_str = offerings.get("ptoDate")
+            
+            if pto_date_str:
+                from datetime import datetime as dt
+                pto_date = dt.strptime(pto_date_str, "%Y-%m-%d")
+                lifetime_data = await self.get_cumulative_production(start_date=pto_date)
+                if lifetime_data and isinstance(lifetime_data, list) and len(lifetime_data) > 0:
+                    # Get the most recent record which has the lifetime cumulative
+                    latest_record = lifetime_data[-1]
+                    result["lifetime_production"] = latest_record.get("cumulativeKwh")
+                    _LOGGER.debug("Lifetime production: %s kWh", result["lifetime_production"])
+        except SunrunApiError as err:
+            _LOGGER.warning("Could not get lifetime data: %s", err)
+        except Exception as err:
+            _LOGGER.warning("Error parsing lifetime data: %s", err)
 
         # Get product offerings / system info
         try:

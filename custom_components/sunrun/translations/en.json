@@ -45,8 +45,11 @@
       "daily_production": {
         "name": "Daily Production"
       },
-      "cumulative_production": {
-        "name": "Cumulative Production"
+      "monthly_production": {
+        "name": "Monthly Production (30 Days)"
+      },
+      "lifetime_production": {
+        "name": "Lifetime Production"
       },
       "current_power": {
         "name": "Current Power"

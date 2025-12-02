@@ -29,10 +29,17 @@ SENSOR_TYPES = {
         "device_class": "energy",
         "state_class": "total_increasing",
     },
-    "cumulative_production": {
-        "name": "Cumulative Production",
+    "monthly_production": {
+        "name": "Monthly Production (30 Days)",
         "unit": "kWh",
         "icon": "mdi:solar-power-variant",
+        "device_class": "energy",
+        "state_class": "total_increasing",
+    },
+    "lifetime_production": {
+        "name": "Lifetime Production",
+        "unit": "kWh",
+        "icon": "mdi:solar-power-variant-outline",
         "device_class": "energy",
         "state_class": "total_increasing",
     },

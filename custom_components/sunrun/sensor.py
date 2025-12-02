@@ -98,7 +98,7 @@ class SunrunSensor(CoordinatorEntity[SunrunDataUpdateCoordinator], SensorEntity)
         
         # Round to reasonable precision
         if value is not None:
-            if self._sensor_type in ("daily_production", "cumulative_production"):
+            if self._sensor_type in ("daily_production", "monthly_production", "lifetime_production"):
                 return round(value, 2)
             else:
                 return round(value, 0)
