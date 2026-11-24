@@ -19,6 +19,17 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def _newest_record(records: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the record with the latest timestamp.
+
+    Sunrun list endpoints do not use one order. Minute production is
+    newest-first, and cumulative production is oldest-first.
+    """
+    if not records:
+        return None
+    return max(records, key=lambda record: record.get("timestamp") or "")
+
+
 class SunrunApiError(Exception):
     """Exception for Sunrun API errors."""
 
@@ -336,6 +347,7 @@ class SunrunApi:
         result: dict[str, Any] = {
             "current_power": None,
             "daily_production": None,
+            "daily_production_date": None,
             "monthly_production": None,
             "lifetime_production": None,
             "consumption": None,
@@ -370,8 +382,11 @@ class SunrunApi:
         try:
             minute_data = await self.get_site_production_minute()
             if minute_data and isinstance(minute_data, list) and len(minute_data) > 0:
-                # Get the most recent data point
-                latest = minute_data[-1]
+                # Newest timestamp, not list position. This feed is newest-first,
+                # so the last item is midnight and reads 0 W.
+                latest = _newest_record(minute_data)
+                if latest is None:
+                    latest = {}
                 _LOGGER.debug("Latest minute data point: %s", latest)
                 
                 # Convert kW to W if necessary (API returns kW)
@@ -402,26 +417,24 @@ class SunrunApi:
         try:
             cumulative_data = await self.get_cumulative_production()
             if cumulative_data and isinstance(cumulative_data, list) and len(cumulative_data) > 0:
-                today = datetime.now().strftime("%Y-%m-%d")
-                _LOGGER.debug("Looking for data for date: %s", today)
-                
                 # API returns list like: [{"timestamp": "2025-12-01", "deliveredKwh": 3, "cumulativeKwh": 22.5}, ...]
-                # Find today's data first, or use the most recent
-                today_record = None
-                latest_record = cumulative_data[-1]  # Last item is most recent
-                
-                for record in cumulative_data:
-                    record_date = record.get("timestamp", "")[:10]
-                    if record_date == today:
-                        today_record = record
-                        break
-                
-                # Use today's record if found, otherwise use latest
-                use_record = today_record if today_record else latest_record
-                _LOGGER.debug("Using cumulative record: %s", use_record)
-                
-                result["daily_production"] = use_record.get("deliveredKwh")
-                result["monthly_production"] = use_record.get("cumulativeKwh")
+                # The current day is published early as deliveredKwh 0 and stays
+                # there until Sunrun finalizes it, so prefer the newest posted day.
+                posted = [
+                    record
+                    for record in cumulative_data
+                    if (record.get("deliveredKwh") or 0) > 0
+                ]
+                daily_record = _newest_record(posted) or _newest_record(cumulative_data)
+                window_end = _newest_record(cumulative_data)
+                _LOGGER.debug("Using daily production record: %s", daily_record)
+
+                if daily_record is not None:
+                    result["daily_production"] = daily_record.get("deliveredKwh")
+                    timestamp = daily_record.get("timestamp") or ""
+                    result["daily_production_date"] = timestamp[:10] or None
+                if window_end is not None:
+                    result["monthly_production"] = window_end.get("cumulativeKwh")
                 
         except SunrunApiError as err:
             _LOGGER.warning("Could not get cumulative data: %s", err)
@@ -441,9 +454,9 @@ class SunrunApi:
                 pto_date = dt.strptime(pto_date_str, "%Y-%m-%d")
                 lifetime_data = await self.get_cumulative_production(start_date=pto_date)
                 if lifetime_data and isinstance(lifetime_data, list) and len(lifetime_data) > 0:
-                    # Get the most recent record which has the lifetime cumulative
-                    latest_record = lifetime_data[-1]
-                    result["lifetime_production"] = latest_record.get("cumulativeKwh")
+                    latest_record = _newest_record(lifetime_data)
+                    if latest_record is not None:
+                        result["lifetime_production"] = latest_record.get("cumulativeKwh")
                     _LOGGER.debug("Lifetime production: %s kWh", result["lifetime_production"])
         except SunrunApiError as err:
             _LOGGER.warning("Could not get lifetime data: %s", err)

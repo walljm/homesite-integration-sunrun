@@ -114,6 +114,11 @@ class SunrunSensor(CoordinatorEntity[SunrunDataUpdateCoordinator], SensorEntity)
             last_update = self.coordinator.data.get("last_update")
             if last_update:
                 attrs["last_api_update"] = last_update
+
+            if self._sensor_type == "daily_production":
+                production_date = self.coordinator.data.get("daily_production_date")
+                if production_date:
+                    attrs["production_date"] = production_date
             
             # Add system info as attributes for main sensors
             if self._sensor_type in ("daily_production", "cumulative_production", "current_power"):
