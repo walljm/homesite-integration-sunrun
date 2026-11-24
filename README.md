@@ -21,7 +21,7 @@ A custom Home Assistant integration to monitor your Sunrun solar system using da
 
 | Sensor | Description | Unit |
 |--------|-------------|------|
-| Daily Production | Energy produced today | kWh |
+| Daily Production | Last posted day's production. Sunrun leaves the current day at 0 kWh until that day is finalized; `production_date` is the day the value belongs to | kWh |
 | Monthly Production (30 Days) | Energy produced in the last 30 days | kWh |
 | Lifetime Production | Total energy produced since installation | kWh |
 
